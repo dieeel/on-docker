@@ -1,0 +1,45 @@
+version: '3'
+
+services:
+  on-docker-image:
+    platform: linux/x86_64
+    build:
+        context: .
+        dockerfile: Dockerfile
+    image: on-docker:${DOCKER_IMAGE_VERSION-latest}
+
+  execute:
+    platform: linux/x86_64
+    image: on-docker:${DOCKER_IMAGE_VERSION-latest}
+    container_name: on_docker_execute${EXECUTE_NAME-}
+    volumes:
+      - ./on_docker:${ON_DOCKER_ROOT:-/var/on-docker}/on_docker
+      - ./bin:${ON_DOCKER_ROOT:-/var/on-docker}/bin
+      - ../work:${ON_DOCKER_ROOT:-/var/on-docker}/work
+    working_dir: ${ON_DOCKER_ROOT:-/var/on-docker}/bin
+    entrypoint:
+      - bash
+      - execute_in_docker.sh
+    environment:
+      - PYTHONPATH=${ON_DOCKER_ROOT:-/var/on-docker}
+      - LOG_LEVEL=${LOG_LEVEL-INFO}
+      - TZ=${TZ-Asia/Tokyo}
+      - EXECUTE_PYTHON_FILE=${EXECUTE_PYTHON_FILE-}
+      - PYTHONDONTWRITEBYTECODE=${PYTHONDONTWRITEBYTECODE-}
+
+  note:
+    platform: linux/x86_64
+    image: on-docker:${DOCKER_IMAGE_VERSION-latest}
+    container_name: on_docker_note
+    ports:
+      - "${NOTE_PORT:-8888}:8888"
+    volumes:
+      - ./on_docker:${ON_DOCKER_ROOT:-/var/on-docker}/on_docker
+      - ./bin:${ON_DOCKER_ROOT:-/var/on-docker}/bin
+      - ../work:${ON_DOCKER_ROOT:-/var/on-docker}/work
+    working_dir: ${ON_DOCKER_ROOT:-/var/on-docker}/work
+    command: jupyter notebook --ip=0.0.0.0 --allow-root --NotebookApp.token='${NOTE_TOKEN:-fooo}'
+    environment:
+      - PYTHONPATH=/var/on_docker
+      - PYTHONDONTWRITEBYTECODE=${PYTHONDONTWRITEBYTECODE-}
+
